@@ -1,9 +1,9 @@
 from flask import Flask, jsonify
 import random
 
-haru = Flask(__name__)
+app = Flask(__name__)
 
-@haru.route('/')
+@app.route('/')
 def home():
     return "On message Haru"
 
@@ -19,9 +19,9 @@ images = [
     
 ]
 
-@haru.route('/random_image', methods=['GET'])
+@app.route('/random_image', methods=['GET'])
 def random_image():
     return jsonify({'image_url': random.choice(images)})
 
 if __name__ == '__main__':
-    haru.run(debug=True)
+    app.run(debug=True)
