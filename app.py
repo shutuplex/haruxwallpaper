@@ -1,27 +1,137 @@
-from flask import Flask, jsonify
-import random
+from flask import Flask, request, jsonify
+import requests
+import os
 
 app = Flask(__name__)
 
+# Your Pexels API key
+PEXELS_API_KEY = ""
+
+
+PEXELS_BASE = "https://api.pexels.com/v1"
+PEXELS_VIDEOS = "https://api.pexels.com/videos"
+
+
 @app.route('/')
 def home():
-    return "On message Haru"
+    return jsonify({
+        "message": "Pexels API Wrapper",
+        "endpoints": {
+            "/search/photos": "Search for photos (GET)",
+            "/search/videos": "Search for videos (GET)",
+            "/photo/<id>": "Get specific photo by ID (GET)",
+            "/curated": "Get curated photos (GET)"
+        }
+    })
 
-images = [
-  "https://telegra.ph//file/77cdd70b8e5257f362db1.jpg",
-  "https://telegra.ph//file/d61fee11d1493b2f044c6.jpg",
-  "https://telegra.ph//file/373783e44da189c586c2b.jpg",
-  "https://telegra.ph//file/2a468cdccfc932d8e9378.jpg",
-  "https://telegra.ph//file/19b203615171543da0002.jpg",
-  "https://telegra.ph//file/54f2930cd345de8f20578.jpg",
-  "https://telegra.ph//file/429d58fa92ccf9ee27da1.jpg",
-  "https://telegra.ph//file/39b4f28097a0e6dc6e21c.jpg"
+
+@app.route('/search/photos', methods=['GET'])
+def search_photos():
+    """Search for photos on Pexels"""
+    query = request.args.get('query')
+    page = request.args.get('page', 1)
+    per_page = request.args.get('per_page', 15)
     
-]
+    if not query:
+        return jsonify({"error": "Query parameter is required"}), 400
+    
+    headers = {
+        "Authorization": PEXELS_API_KEY
+    }
+    
+    params = {
+        "query": query,
+        "page": page,
+        "per_page": per_page
+    }
+    
+    try:
+        response = requests.get(
+            f"{PEXELS_BASE}/search",
+            headers=headers,
+            params=params
+        )
+        response.raise_for_status()
+        return jsonify(response.json())
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": str(e)}), 500
 
-@app.route('/random_image', methods=['GET'])
-def random_image():
-    return jsonify({'image_url': random.choice(images)})
+
+@app.route('/search/videos', methods=['GET'])
+def search_videos():
+    """Search for videos on Pexels"""
+    query = request.args.get('query')
+    page = request.args.get('page', 1)
+    per_page = request.args.get('per_page', 15)
+    
+    if not query:
+        return jsonify({"error": "Query parameter is required"}), 400
+    
+    headers = {
+        "Authorization": PEXELS_API_KEY
+    }
+    
+    params = {
+        "query": query,
+        "page": page,
+        "per_page": per_page
+    }
+    
+    try:
+        response = requests.get(
+            f"{PEXELS_VIDEOS}/search",
+            headers=headers,
+            params=params
+        )
+        response.raise_for_status()
+        return jsonify(response.json())
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/photo/<int:photo_id>', methods=['GET'])
+def get_photo(photo_id):
+    headers = {
+        "Authorization": PEXELS_API_KEY
+    }
+    
+    try:
+        response = requests.get(
+            f"{PEXELS_BASE}/photos/{photo_id}",
+            headers=headers
+        )
+        response.raise_for_status()
+        return jsonify(response.json())
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/curated', methods=['GET'])
+def get_curated():
+    """Get curated photos"""
+    page = request.args.get('page', 1)
+    per_page = request.args.get('per_page', 15)
+    
+    headers = {
+        "Authorization": PEXELS_API_KEY
+    }
+    
+    params = {
+        "page": page,
+        "per_page": per_page
+    }
+    
+    try:
+        response = requests.get(
+            f"{PEXELS_BASE}/curated",
+            headers=headers,
+            params=params
+        )
+        response.raise_for_status()
+        return jsonify(response.json())
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": str(e)}), 500
+
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=8080)
